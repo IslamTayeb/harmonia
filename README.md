@@ -1,8 +1,12 @@
-# Spotify Music Taste Clustering
+# Harmonia
 
-Cluster your Spotify library using interpretable audio features and GPT-powered lyric analysis. Produces a **33-dimensional interpretable feature vector** where every dimension has human-readable meaning.
+Harmonia is an embedding pipeline that turns a chaotic Spotify library into
+isolated, measurable dimensions of sound, language, and metadata. It extracts
+audio features, classifies lyrics, builds a **33-dimensional interpretable
+embedding**, clusters the resulting vectors, and exports interactive
+visualizations/playlists.
 
-**For the full methodology, design decisions, and technical deep-dives, see [the accompanying essay](YOUR_ESSAY_URL_HERE).**
+**For the full methodology, design decisions, and technical deep-dives, see [the accompanying essay](https://apmoverflow.xyz/on-dimensions-of-taste/).**
 
 **Time estimate:** ~3-4 hours for 1,500 songs (mostly waiting: downloads, audio extraction, GPT API calls). All steps cache progress, so you can stop/resume.
 
@@ -33,8 +37,8 @@ Cluster your Spotify library using interpretable audio features and GPT-powered 
 Clone and install dependencies.
 
 ```bash
-git clone https://github.com/yourusername/spotify-clustering.git
-cd spotify-clustering
+git clone https://github.com/IslamTayeb/harmonia.git
+cd harmonia
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
