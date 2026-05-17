@@ -211,6 +211,10 @@ data/
 
 # Spotify OAuth cache
 .cache
+
+# Local Streamlit settings
+.streamlit/
+
 *claude*
 temp/
 
