@@ -18,6 +18,7 @@ from analysis.components.visualization.umap_3d import (
     get_cluster_color,
     OUTLIER_COLOR,
 )
+from analysis.components.export.html_theme import with_harmonia_theme_script
 from analysis.components.visualization.color_palette import get_subcluster_color
 from analysis.pipeline.config import (
     CLUSTER_NAMES,
@@ -468,6 +469,7 @@ def export_for_bearblog(
         },
         div_id="plotly-div",
     )
+    html = with_harmonia_theme_script(html)
 
     # Add loading backdrop with hard refresh message
     html = add_loading_backdrop(html)
@@ -697,6 +699,7 @@ def export_audio_lyrics_overlay(input_file="analysis/outputs/analysis_data.pkl")
         },
         div_id="plotly-div",
     )
+    html = with_harmonia_theme_script(html)
 
     # Add loading backdrop with hard refresh message
     html = add_loading_backdrop(html)
@@ -908,6 +911,7 @@ def export_saved_subclusters():
             },
             div_id="plotly-div",
         )
+        html = with_harmonia_theme_script(html)
 
         # Add loading backdrop with hard refresh message
         html = add_loading_backdrop(html)
@@ -1185,6 +1189,7 @@ def export_key_encoding_visualization():
         div_id="plotly-div",
     )
     html = add_loading_backdrop(html)
+    html = with_harmonia_theme_script(html)
 
     output_dir = "export/visualizations/key_encoding"
     os.makedirs(output_dir, exist_ok=True)

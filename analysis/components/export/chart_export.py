@@ -17,6 +17,7 @@ import os
 import streamlit as st
 import plotly.graph_objects as go
 from typing import Optional
+from analysis.components.export.html_theme import with_harmonia_theme_script
 
 
 def export_chart_to_html(
@@ -48,7 +49,7 @@ def export_chart_to_html(
         margin=dict(l=60, r=20, t=40, b=60),
     )
 
-    html = fig.to_html(
+    html = with_harmonia_theme_script(fig.to_html(
         include_plotlyjs='cdn',
         config={
             'displayModeBar': 'hover',
@@ -57,7 +58,7 @@ def export_chart_to_html(
             'fillFrame': True
         },
         div_id="plotly-div"
-    )
+    ))
 
     output_path = os.path.join(chart_dir, "index.html")
     with open(output_path, 'w') as f:
