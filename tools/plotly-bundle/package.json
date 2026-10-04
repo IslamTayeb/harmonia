@@ -1,0 +1,16 @@
+{
+  "name": "plotly-harmonia-bundle",
+  "private": true,
+  "description": "Builds export/vendor/plotly-harmonia.min.js: plotly.js with only the traces Harmonia exports use.",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.5",
+    "esbuild-plugin-environment": "^0.4.0",
+    "esbuild-plugin-glsl": "^1.2.2",
+    "esbuild-plugin-inline-css": "^0.0.1",
+    "plotly.js": "3.3.0",
+    "stream-browserify": "^3.0.0"
+  }
+}

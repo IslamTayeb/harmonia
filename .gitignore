@@ -224,3 +224,4 @@ analysis/logging/
 backup/
 backups/
 errors.log
+tools/plotly-bundle/node_modules/
