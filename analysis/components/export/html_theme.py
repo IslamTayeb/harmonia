@@ -7,8 +7,10 @@ page posts ``{harmoniaReady: true}`` to its parent so the parent can reply
 with its current theme.
 """
 
+import base64
 import json
 import re
+from array import array
 
 HARMONIA_THEME_SCRIPT = """
 <script id="harmonia-theme-script">
@@ -73,21 +75,16 @@ def with_harmonia_theme_script(html: str) -> str:
     return html + HARMONIA_THEME_SCRIPT
 
 
-# Plotly's partial bundles are ~3x smaller than the full 4.8MB build. Every
-# export needs only one of these: 2D charts use the cartesian bundle, 3D
-# embeddings use gl3d. Pinned and SRI-checked on jsDelivr (immutable cache).
-PLOTLY_BUNDLES = {
-    "cartesian": (
-        "https://cdn.jsdelivr.net/npm/plotly.js-cartesian-dist-min@3.3.0/plotly-cartesian.min.js",
-        "sha384-2CO28T33GZOc/JFyswEziubu7UklcWP0CMkMmeOH9d4yKfaB5AfU5iYs2ipINg6Y",
-    ),
-    "gl3d": (
-        "https://cdn.jsdelivr.net/npm/plotly.js-gl3d-dist-min@3.3.0/plotly-gl3d.min.js",
-        "sha384-ZESRdauh2iiQrGcePkNX7WpBfllbdN7Dlvoq9dbvEIf9yiGLUsELlirIlGju0vRm",
-    ),
-}
-CARTESIAN_TRACES = {"scatter", "bar", "pie", "histogram", "heatmap"}
-GL3D_TRACES = {"scatter3d"}
+# One plotly.js build holding only the traces these exports draw (built by
+# tools/plotly-bundle, 466KB brotli vs 1.4MB for the full build). Every embed
+# loads the same commit-pinned, SRI-checked URL, so it downloads once and
+# stays in jsDelivr's immutable cache. Rebuild and re-pin when adding a trace.
+PLOTLY_BUNDLE_SRC = (
+    "https://cdn.jsdelivr.net/gh/IslamTayeb/harmonia@0d3fcdec1e492daa7dd13bc8b8083e43edffabc4"
+    "/export/vendor/plotly-harmonia.min.js"
+)
+PLOTLY_BUNDLE_INTEGRITY = "sha384-8tIDVoAwhi3FHDHwLMuPHrgo34Zn+9lM2PJ85hpH7jhZDH1+5boHkdq5CIwKHqWn"
+BUNDLE_TRACES = {"scatter", "bar", "pie", "histogram", "heatmap", "scatter3d"}
 
 _PLOTLY_SCRIPT = re.compile(r'<script charset="utf-8" src="https://cdn[^"]*plotly[^"]*"[^>]*></script>')
 _NEW_PLOT = re.compile(r'Plotly\.newPlot\(\s*"[^"]+",\s*')
@@ -97,11 +94,26 @@ def _escape_for_script(text: str) -> str:
     return text.replace("<", "\\u003c").replace(">", "\\u003e").replace("/", "\\u002f")
 
 
-def with_partial_plotly_bundle(html: str) -> str:
-    """Load the smallest Plotly bundle that can draw this export's traces.
+def _downcast_float_arrays(value):
+    """Store Plotly's base64 float64 arrays as float32: half the bytes, and
+    float32 is far finer than anything an embed can show."""
+    if isinstance(value, list):
+        for item in value:
+            _downcast_float_arrays(item)
+    elif isinstance(value, dict):
+        if value.get("dtype") == "f8" and isinstance(value.get("bdata"), str):
+            floats = array("d", base64.b64decode(value["bdata"]))
+            value["bdata"] = base64.b64encode(array("f", floats).tobytes()).decode()
+            value["dtype"] = "f4"
+        for item in value.values():
+            _downcast_float_arrays(item)
 
-    ``scattergl`` traces are drawn as SVG ``scatter`` so 2D charts never need
-    the WebGL bundle; the exported line charts are small enough for SVG.
+
+def with_partial_plotly_bundle(html: str) -> str:
+    """Load the Harmonia-only Plotly bundle and slim the embedded data.
+
+    ``scattergl`` traces are drawn as SVG ``scatter`` so no chart needs the
+    WebGL 2D renderer; the exported line charts are small enough for SVG.
     """
     match = _NEW_PLOT.search(html)
     if not match or not _PLOTLY_SCRIPT.search(html):
@@ -111,20 +123,18 @@ def with_partial_plotly_bundle(html: str) -> str:
     for trace in data:
         if trace.get("type") == "scattergl":
             trace["type"] = "scatter"
+    _downcast_float_arrays(data)
     html = html[: match.end()] + _escape_for_script(
         json.dumps(data, separators=(",", ":"))
     ) + html[end:]
 
-    types = {trace.get("type", "scatter") for trace in data}
-    if types <= CARTESIAN_TRACES:
-        bundle = "cartesian"
-    elif types <= GL3D_TRACES:
-        bundle = "gl3d"
-    else:
+    if not {trace.get("type", "scatter") for trace in data} <= BUNDLE_TRACES:
         return html
 
-    src, integrity = PLOTLY_BUNDLES[bundle]
-    tag = f'<script charset="utf-8" src="{src}" integrity="{integrity}" crossorigin="anonymous"></script>'
+    tag = (
+        f'<script charset="utf-8" src="{PLOTLY_BUNDLE_SRC}" '
+        f'integrity="{PLOTLY_BUNDLE_INTEGRITY}" crossorigin="anonymous"></script>'
+    )
     return _PLOTLY_SCRIPT.sub(lambda _: tag, html, count=1)
 
 
