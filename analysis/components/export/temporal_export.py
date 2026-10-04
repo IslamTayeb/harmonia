@@ -18,7 +18,7 @@ from analysis.components.visualization.color_palette import (
     GENRE_FAMILY_COLORS,
     SPOTIFY_GREEN,
 )
-from analysis.components.export.html_theme import with_harmonia_theme_script
+from analysis.components.export.html_theme import finalize_embed_html
 from analysis.pipeline.config import get_cluster_name
 
 # Genre families for temporal analysis (copied from temporal.py)
@@ -219,7 +219,7 @@ def _apply_web_layout(fig: go.Figure, height: int = 600) -> go.Figure:
 
 def _fig_to_html(fig: go.Figure, title: str = "") -> str:
     """Convert a plotly figure to standalone HTML."""
-    html = with_harmonia_theme_script(fig.to_html(
+    html = finalize_embed_html(fig.to_html(
         include_plotlyjs="cdn",
         config={
             "displayModeBar": "hover",
